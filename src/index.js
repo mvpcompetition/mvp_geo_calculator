@@ -1,10 +1,11 @@
 const { 
     getPersonAddress, 
     getVenueAddress, 
-    getPersonLngLat, 
-    getVenueLngLat,
-    updatePersonLngLat,
-    updateVenueLngLat
+    getPersonCoordinates, 
+    getVenueCoordinates,
+    updatePersonCoordinates,
+    updateVenueCoordinates,
+    savePersonVenueDistance
 } = require('./database');
 const { geocodeAddress, calculateDistance } = require('./googleMapsService');
 
@@ -174,18 +175,21 @@ async function handlePersonVenueDistance(personId, venueId) {
     }
     
     // Get coordinates
-    const personCoords = await getPersonLngLat(personId);
+    const personCoords = await getPersonCoordinates(personId);
     if (!personCoords) {
         throw new Error(`Person ${personId} has no coordinates. Run 'person' geocoding first.`);
     }
     
-    const venueCoords = await getVenueLngLat(venueId);
+    const venueCoords = await getVenueCoordinates(venueId);
     if (!venueCoords) {
         throw new Error(`Venue ${venueId} has no coordinates. Run 'venue' geocoding first.`);
     }
     
     // Calculate distance
     const distance = await calculateDistance(personCoords, venueCoords);
+    
+    // Save distance to database
+    await savePersonVenueDistance(personId, venueId, distance.distanceMeters, distance.durationSeconds);
     
     return {
         personId,
@@ -210,12 +214,12 @@ async function handleVenueVenueDistance(venueId1, venueId2) {
     }
     
     // Get coordinates
-    const venue1Coords = await getVenueLngLat(venueId1);
+    const venue1Coords = await getVenueCoordinates(venueId1);
     if (!venue1Coords) {
         throw new Error(`Venue ${venueId1} has no coordinates. Run 'venue' geocoding first.`);
     }
     
-    const venue2Coords = await getVenueLngLat(venueId2);
+    const venue2Coords = await getVenueCoordinates(venueId2);
     if (!venue2Coords) {
         throw new Error(`Venue ${venueId2} has no coordinates. Run 'venue' geocoding first.`);
     }
