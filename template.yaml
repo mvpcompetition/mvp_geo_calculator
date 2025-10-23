@@ -36,7 +36,6 @@ Resources:
         Variables:
           NODE_ENV: production
           GOOGLE_API_SECRET_NAME: mvp-google-maps-api-key
-          AWS_REGION: eu-north-1
 
   MvpGeoCalculatorExecutionRole:
     Type: AWS::IAM::Role
