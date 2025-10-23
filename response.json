@@ -1,0 +1,1 @@
+{"statusCode":500,"body":"{\"success\":false,\"error\":\"getaddrinfo ENOTFOUND mvp-database.c3qrae0mo5vn.eu-north-1.rds.amazonaws.com\",\"duration\":87,\"timestamp\":\"2025-10-23T16:56:12.031Z\"}"}
