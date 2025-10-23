@@ -117,15 +117,15 @@ async function handlePersonGeocoding(personId) {
     }
     
     // Geocode the address
-    const coordinates = await geocodeAddress(address);
+    const result = await geocodeAddress(address);
     
-    // Update person record with coordinates
-    await updatePersonLngLat(personId, coordinates.lng, coordinates.lat);
+    // Update person record with coordinates and placeId
+    await updatePersonCoordinates(personId, result.lat, result.lng, result.placeId || '');
     
     return {
         personId,
         address,
-        coordinates
+        coordinates: result
     };
 }
 
@@ -148,15 +148,15 @@ async function handleVenueGeocoding(venueId) {
     }
     
     // Geocode the address
-    const coordinates = await geocodeAddress(address);
+    const result = await geocodeAddress(address);
     
-    // Update venue record with coordinates
-    await updateVenueLngLat(venueId, coordinates.lng, coordinates.lat);
+    // Update venue record with coordinates and placeId
+    await updateVenueCoordinates(venueId, result.lat, result.lng, result.placeId || '');
     
     return {
         venueId,
         address,
-        coordinates
+        coordinates: result
     };
 }
 

@@ -16,153 +16,137 @@ function getPool() {
 }
 
 /**
- * Fetches a person's address from the database
- * @param {number} personId - The person ID
- * @returns {Promise<string|null>} The formatted address or null
+ * Fetch person address from database
+ * @param {number} personId - Person ID
+ * @returns {Promise<Object>} Person address data
  */
 async function getPersonAddress(personId) {
-    const pool = getPool();
     console.log(`[DB] Fetching address for person ID: ${personId}`);
+    const pool = getPool();
     
     const [rows] = await pool.execute(
-        'SELECT personAddress, personZip, personCity, personCountry FROM person WHERE personId = ?',
+        'SELECT personId, personAddressLine1, personAddressLine2, personPostalCode, personPostalCity, personLatLng, personPlaceId FROM tblPerson WHERE personId = ?',
         [personId]
     );
     
     if (rows.length === 0) {
-        console.log(`[DB] Person ${personId} not found`);
-        return null;
+        throw new Error(`Person with ID ${personId} not found`);
     }
     
-    const person = rows[0];
-    const addressParts = [
-        person.personAddress,
-        person.personZip,
-        person.personCity,
-        person.personCountry
-    ].filter(part => part && part.trim());
-    
-    const address = addressParts.join(', ');
-    console.log(`[DB] Person address: ${address}`);
-    return address;
+    return rows[0];
 }
 
 /**
- * Fetches a venue's address from the database
- * @param {number} venueId - The venue ID
- * @returns {Promise<string|null>} The formatted address or null
+ * Fetch venue address from database
+ * @param {number} venueId - Venue ID
+ * @returns {Promise<Object>} Venue address data
  */
 async function getVenueAddress(venueId) {
-    const pool = getPool();
     console.log(`[DB] Fetching address for venue ID: ${venueId}`);
+    const pool = getPool();
     
     const [rows] = await pool.execute(
-        'SELECT venueAddress, venueZip, venueCity, venueCountry FROM venue WHERE venueId = ?',
+        'SELECT venueId, venueAddressLine1, venueAddressLine2, venuePostalCode, venuePostalCity, venueLatLng, venuePlaceId FROM tblVenue WHERE venueId = ?',
         [venueId]
     );
     
     if (rows.length === 0) {
-        console.log(`[DB] Venue ${venueId} not found`);
-        return null;
+        throw new Error(`Venue with ID ${venueId} not found`);
     }
     
-    const venue = rows[0];
-    const addressParts = [
-        venue.venueAddress,
-        venue.venueZip,
-        venue.venueCity,
-        venue.venueCountry
-    ].filter(part => part && part.trim());
-    
-    const address = addressParts.join(', ');
-    console.log(`[DB] Venue address: ${address}`);
-    return address;
+    return rows[0];
 }
 
 /**
- * Gets LngLat coordinates for a person
- * @param {number} personId - The person ID
- * @returns {Promise<{lng: number, lat: number}|null>} Coordinates or null
+ * Get person coordinates from database
+ * @param {number} personId - Person ID
+ * @returns {Promise<Object>} Coordinates {lat, lng}
  */
-async function getPersonLngLat(personId) {
+async function getPersonCoordinates(personId) {
+    console.log(`[DB] Fetching coordinates for person ID: ${personId}`);
     const pool = getPool();
-    console.log(`[DB] Fetching LngLat for person ID: ${personId}`);
     
     const [rows] = await pool.execute(
-        'SELECT personLng, personLat FROM person WHERE personId = ?',
+        'SELECT personLatLng FROM tblPerson WHERE personId = ?',
         [personId]
     );
     
-    if (rows.length === 0 || !rows[0].personLng || !rows[0].personLat) {
-        console.log(`[DB] LngLat not found for person ${personId}`);
-        return null;
+    if (rows.length === 0 || !rows[0].personLatLng) {
+        throw new Error(`Person ${personId} has no coordinates`);
     }
     
+    const [lat, lng] = rows[0].personLatLng.split(',');
     return {
-        lng: parseFloat(rows[0].personLng),
-        lat: parseFloat(rows[0].personLat)
+        lat: parseFloat(lat),
+        lng: parseFloat(lng)
     };
 }
 
 /**
- * Gets LngLat coordinates for a venue
- * @param {number} venueId - The venue ID
- * @returns {Promise<{lng: number, lat: number}|null>} Coordinates or null
+ * Get venue coordinates from database
+ * @param {number} venueId - Venue ID
+ * @returns {Promise<Object>} Coordinates {lat, lng}
  */
-async function getVenueLngLat(venueId) {
+async function getVenueCoordinates(venueId) {
+    console.log(`[DB] Fetching coordinates for venue ID: ${venueId}`);
     const pool = getPool();
-    console.log(`[DB] Fetching LngLat for venue ID: ${venueId}`);
     
     const [rows] = await pool.execute(
-        'SELECT venueLng, venueLat FROM venue WHERE venueId = ?',
+        'SELECT venueLatLng FROM tblVenue WHERE venueId = ?',
         [venueId]
     );
     
-    if (rows.length === 0 || !rows[0].venueLng || !rows[0].venueLat) {
-        console.log(`[DB] LngLat not found for venue ${venueId}`);
-        return null;
+    if (rows.length === 0 || !rows[0].venueLatLng) {
+        throw new Error(`Venue ${venueId} has no coordinates`);
     }
     
+    const [lat, lng] = rows[0].venueLatLng.split(',');
     return {
-        lng: parseFloat(rows[0].venueLng),
-        lat: parseFloat(rows[0].venueLat)
+        lat: parseFloat(lat),
+        lng: parseFloat(lng)
     };
 }
 
 /**
- * Updates person LngLat coordinates in the database
- * @param {number} personId - The person ID
- * @param {number} lng - Longitude
+ * Update person coordinates in database
+ * @param {number} personId - Person ID
  * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @param {string} placeId - Google Place ID
+ * @returns {Promise<void>}
  */
-async function updatePersonLngLat(personId, lng, lat) {
+async function updatePersonCoordinates(personId, lat, lng, placeId = '') {
+    console.log(`[DB] Updating coordinates for person ID: ${personId}`);
     const pool = getPool();
-    console.log(`[DB] Updating LngLat for person ${personId}: ${lng}, ${lat}`);
     
+    const latLng = `${lat},${lng}`;
     await pool.execute(
-        'UPDATE person SET personLng = ?, personLat = ? WHERE personId = ?',
-        [lng, lat, personId]
+        'UPDATE tblPerson SET personLatLng = ?, personPlaceId = ?, personRecalcCoordinates = 0 WHERE personId = ?',
+        [latLng, placeId, personId]
     );
     
-    console.log(`[DB] Successfully updated person ${personId} LngLat`);
+    console.log(`[DB] Successfully updated person ${personId} coordinates: ${latLng}`);
 }
 
 /**
- * Updates venue LngLat coordinates in the database
- * @param {number} venueId - The venue ID
- * @param {number} lng - Longitude
+ * Update venue coordinates in database
+ * @param {number} venueId - Venue ID
  * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @param {string} placeId - Google Place ID
+ * @returns {Promise<void>}
  */
-async function updateVenueLngLat(venueId, lng, lat) {
+async function updateVenueCoordinates(venueId, lat, lng, placeId = '') {
+    console.log(`[DB] Updating coordinates for venue ID: ${venueId}`);
     const pool = getPool();
-    console.log(`[DB] Updating LngLat for venue ${venueId}: ${lng}, ${lat}`);
     
+    const latLng = `${lat},${lng}`;
     await pool.execute(
-        'UPDATE venue SET venueLng = ?, venueLat = ? WHERE venueId = ?',
-        [lng, lat, venueId]
+        'UPDATE tblVenue SET venueLatLng = ?, venuePlaceId = ? WHERE venueId = ?',
+        [latLng, placeId, venueId]
     );
     
-    console.log(`[DB] Successfully updated venue ${venueId} LngLat`);
+    console.log(`[DB] Successfully updated venue ${venueId} coordinates: ${latLng}`);
 }
 
 /**

@@ -29,15 +29,46 @@ function httpsGet(url) {
 }
 
 /**
- * Geocodes an address to get LngLat coordinates
- * @param {string} address - The address to geocode
- * @returns {Promise<{lng: number, lat: number}>} Coordinates
+ * Formats address object into search string (matching PHP logic)
+ * @param {Object} addressObj - Address object with line1, line2, postal code, city
+ * @returns {string} Formatted address string
  */
-async function geocodeAddress(address) {
-    console.log(`[GOOGLE] Geocoding address: ${address}`);
+function formatAddressForGeocoding(addressObj) {
+    let parts = [];
+    
+    // Add address line 1
+    if (addressObj.personAddressLine1) parts.push(addressObj.personAddressLine1.trim());
+    else if (addressObj.venueAddressLine1) parts.push(addressObj.venueAddressLine1.trim());
+    
+    // Add address line 2 if present
+    if (addressObj.personAddressLine2) parts.push(addressObj.personAddressLine2.trim());
+    else if (addressObj.venueAddressLine2) parts.push(addressObj.venueAddressLine2.trim());
+    
+    // Add postal code
+    if (addressObj.personPostalCode) parts.push(addressObj.personPostalCode.trim());
+    else if (addressObj.venuePostalCode) parts.push(addressObj.venuePostalCode.trim());
+    
+    // Add city
+    if (addressObj.personPostalCity) parts.push(addressObj.personPostalCity.trim());
+    else if (addressObj.venuePostalCity) parts.push(addressObj.venuePostalCity.trim());
+    
+    // Add country
+    parts.push('Denmark');
+    
+    return parts.filter(p => p && p.length > 0).join(', ');
+}
+
+/**
+ * Geocodes an address to get LngLat coordinates
+ * @param {Object} addressObj - The address object from database
+ * @returns {Promise<{lng: number, lat: number, placeId: string}>} Coordinates and place ID
+ */
+async function geocodeAddress(addressObj) {
+    const formattedAddress = formatAddressForGeocoding(addressObj);
+    console.log(`[GOOGLE] Geocoding address: ${formattedAddress}`);
     
     const apiKey = await getGoogleApiKey();
-    const encodedAddress = encodeURIComponent(address);
+    const encodedAddress = encodeURIComponent(formattedAddress);
     const url = `https://maps.google.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
     
     try {
@@ -51,12 +82,16 @@ async function geocodeAddress(address) {
             throw new Error('No results found for address');
         }
         
-        const location = response.results[0].geometry.location;
-        console.log(`[GOOGLE] Geocoding successful: lng=${location.lng}, lat=${location.lat}`);
+        const result = response.results[0];
+        const location = result.geometry.location;
+        const placeId = result.place_id || '';
+        
+        console.log(`[GOOGLE] Geocoding successful: lat=${location.lat}, lng=${location.lng}, placeId=${placeId}`);
         
         return {
+            lat: location.lat,
             lng: location.lng,
-            lat: location.lat
+            placeId: placeId
         };
     } catch (error) {
         console.error('[GOOGLE ERROR] Geocoding failed:', error);

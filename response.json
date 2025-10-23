@@ -1,1 +1,1 @@
-{"statusCode":500,"body":"{\"success\":false,\"error\":\"getaddrinfo ENOTFOUND mvp-database.c3qrae0mo5vn.eu-north-1.rds.amazonaws.com\",\"duration\":79,\"timestamp\":\"2025-10-23T18:53:29.546Z\"}"}
+{"statusCode":500,"body":"{\"success\":false,\"error\":\"Table 'dbMvp.person' doesn't exist\",\"duration\":150,\"timestamp\":\"2025-10-23T18:55:44.604Z\"}"}
