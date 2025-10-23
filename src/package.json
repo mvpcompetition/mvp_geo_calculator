@@ -1,0 +1,10 @@
+{
+  "name": "mvp-geo-calculator-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function code for MVP Geo Calculator",
+  "main": "index.js",
+  "dependencies": {
+    "mysql2": "^3.6.5",
+    "@aws-sdk/client-secrets-manager": "^3.600.0"
+  }
+}
