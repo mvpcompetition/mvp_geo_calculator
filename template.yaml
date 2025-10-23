@@ -36,10 +36,10 @@ Resources:
         Variables:
           NODE_ENV: production
           GOOGLE_API_SECRET_NAME: mvp-google-maps-api-key
-          DB_HOST: mvp-database.c3qrae0mo5vn.eu-north-1.rds.amazonaws.com
-          DB_USER: admin
-          DB_PASSWORD: Bettingexpert2024
-          DB_NAME: mvp
+          DB_HOST: mvp-admin-cluster.cluster-cxguyyacuvle.eu-west-1.rds.amazonaws.com
+          DB_USER: mvpappadmin
+          DB_PASSWORD: Ibahdn2007
+          DB_NAME: dbMvp
           DB_PORT: '3306'
 
   MvpGeoCalculatorExecutionRole:
