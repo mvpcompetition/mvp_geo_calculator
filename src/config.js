@@ -11,6 +11,6 @@ module.exports = {
     },
     google: {
         secretName: process.env.GOOGLE_API_SECRET_NAME || 'mvp-google-maps-api-key',
-        region: 'eu-north-1'
+        region: 'eu-west-1'
     }
 };
