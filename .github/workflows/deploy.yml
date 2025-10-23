@@ -1,0 +1,73 @@
+name: Deploy MVP Geo Calculator
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'template.yaml'
+      - 'src/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy-geo-calculator:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::269610887509:role/GitHubAction-MvpCompetition-BackendDeploy
+          aws-region: eu-west-1
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      
+      - name: Install dependencies
+        run: |
+          cd src
+          npm install --production
+      
+      - name: Package Lambda function
+        run: |
+          cd src
+          zip -r ../function.zip .
+      
+      - name: Deploy CloudFormation Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name mvp-geo-calculator \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+      
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name mvp-geo-calculator \
+            --zip-file fileb://function.zip
+      
+      - name: Wait for Lambda update to complete
+        run: |
+          aws lambda wait function-updated \
+            --function-name mvp-geo-calculator
+      
+      - name: Get Stack Outputs
+        id: stack-outputs
+        run: |
+          aws cloudformation describe-stacks --stack-name mvp-geo-calculator --query "Stacks[0].Outputs" --output json > lambda-outputs.json
+          cat lambda-outputs.json
+        shell: bash
+      
+      - name: Display Outputs
+        run: |
+          echo "Function Name: $(jq -r '.[] | select(.OutputKey=="FunctionName") | .OutputValue' lambda-outputs.json)"
+          echo "Function ARN: $(jq -r '.[] | select(.OutputKey=="FunctionArn") | .OutputValue' lambda-outputs.json)"
+          echo "Execution Role ARN: $(jq -r '.[] | select(.OutputKey=="ExecutionRoleArn") | .OutputValue' lambda-outputs.json)"

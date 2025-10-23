@@ -1,0 +1,19 @@
+{
+  "name": "mvp-geo-calculator",
+  "version": "1.0.0",
+  "description": "MVP Geo Calculator - Lambda function for geocoding addresses and calculating distances using Google Maps API",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest",
+    "package": "cd src && npm install --production && zip -r ../function.zip . && cd ..",
+    "deploy": "npm run package && aws cloudformation deploy --template-file template.yaml --stack-name mvp-geo-calculator --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset && aws lambda update-function-code --function-name mvp-geo-calculator --zip-file fileb://function.zip",
+    "logs": "aws logs tail /aws/lambda/mvp-geo-calculator --follow"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.5",
+    "@aws-sdk/client-secrets-manager": "^3.600.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

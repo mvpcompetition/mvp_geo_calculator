@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MVP Geo Calculator Lambda Function - Geocoding and distance calculations
+
+Parameters:
+  VpcId:
+    Type: String
+    Default: vpc-0087c40fb3fb07242
+  SecurityGroupId:
+    Type: String
+    Default: sg-0017514c21d071fd7
+
+Resources:
+  MvpGeoCalculatorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mvp-geo-calculator
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Timeout: 30
+      MemorySize: 512
+      Role: !GetAtt MvpGeoCalculatorExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event, context) => {
+              console.log('Placeholder - will be replaced by deployment');
+              return { statusCode: 200 };
+          };
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds:
+          - subnet-01dbfe6602ae3d975
+          - subnet-083036ccec55530d5
+      Environment:
+        Variables:
+          NODE_ENV: production
+          GOOGLE_API_SECRET_NAME: mvp-google-maps-api-key
+          AWS_REGION: eu-north-1
+
+  MvpGeoCalculatorExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: mvp-geo-calculator-execution-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: mvp-geo-calculator-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/mvp-geo-calculator:*'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:mvp-google-maps-api-key-*'
+
+  MvpGeoCalculatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/mvp-geo-calculator
+      RetentionInDays: 7
+
+Outputs:
+  FunctionName:
+    Description: Lambda Function Name
+    Value: !Ref MvpGeoCalculatorFunction
+  FunctionArn:
+    Description: ARN of the Geo Calculator Lambda
+    Value: !GetAtt MvpGeoCalculatorFunction.Arn
+  ExecutionRoleArn:
+    Description: ARN of the Execution Role
+    Value: !GetAtt MvpGeoCalculatorExecutionRole.Arn
