@@ -150,6 +150,30 @@ async function updateVenueCoordinates(venueId, lat, lng, placeId = '') {
 }
 
 /**
+ * Save distance calculation results to database
+ * @param {number} personId - Person ID
+ * @param {number} venueId - Venue ID
+ * @param {number} distanceMeters - Distance in meters
+ * @param {number} durationSeconds - Duration in seconds
+ * @returns {Promise<void>}
+ */
+async function savePersonVenueDistance(personId, venueId, distanceMeters, durationSeconds) {
+    console.log(`[DB] Saving distance for person ${personId} to venue ${venueId}`);
+    const pool = getPool();
+    
+    await pool.execute(
+        `INSERT INTO tblPersonVenue (personId, venueId, personVenueMeters, personVenueSeconds)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE 
+         personVenueMeters = VALUES(personVenueMeters),
+         personVenueSeconds = VALUES(personVenueSeconds)`,
+        [personId, venueId, distanceMeters, durationSeconds]
+    );
+    
+    console.log(`[DB] Successfully saved distance data: ${distanceMeters}m, ${durationSeconds}s`);
+}
+
+/**
  * Closes the database connection pool
  */
 async function closePool() {
@@ -163,9 +187,10 @@ async function closePool() {
 module.exports = {
     getPersonAddress,
     getVenueAddress,
-    getPersonLngLat,
-    getVenueLngLat,
-    updatePersonLngLat,
-    updateVenueLngLat,
+    getPersonCoordinates,
+    getVenueCoordinates,
+    updatePersonCoordinates,
+    updateVenueCoordinates,
+    savePersonVenueDistance,
     closePool
 };
