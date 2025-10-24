@@ -24,6 +24,7 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+ENV_VARIABLES.md
 
 # AWS
 .aws-sam/

@@ -5,10 +5,10 @@
 Configure these in AWS Lambda Console → Configuration → Environment variables:
 
 ### Database Configuration
-- **DB_HOST**: `mvp-admin-cluster.cluster-cxguyyacuvle.eu-west-1.rds.amazonaws.com`
-- **DB_USER**: `mvpappadmin`
-- **DB_PASSWORD**: `Ibahdn2007`
-- **DB_NAME**: `dbMvp`
+- **DB_HOST**: `<your-rds-endpoint>`
+- **DB_USER**: `<your-db-username>`
+- **DB_PASSWORD**: `<your-db-password>`
+- **DB_NAME**: `<your-database-name>`
 - **DB_PORT**: `3306`
 
 ### Google Maps API Configuration
@@ -34,3 +34,9 @@ The Lambda function will automatically fetch this secret using the `secretsManag
 ## Security Note
 
 ⚠️ **All hardcoded credentials have been removed from the source code.** The application now relies entirely on environment variables and AWS Secrets Manager. This prevents credential exposure to developers who have access to the codebase.
+
+## Setup Instructions
+
+1. Copy this file to `ENV_VARIABLES.md` (which is gitignored)
+2. Fill in the actual values for your environment
+3. Use these values to configure your AWS Lambda environment variables
